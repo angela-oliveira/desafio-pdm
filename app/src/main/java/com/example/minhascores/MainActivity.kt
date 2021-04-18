@@ -14,27 +14,29 @@ class MainActivity : AppCompatActivity() {
     private lateinit var corDAO: corDAO
     private lateinit var cores : ArrayList<Cor>
 
+    private lateinit var lista: ListView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
         this.corDAO = corDAO(this)
         this.cores = ArrayList<Cor>()
-        val lvCores = findViewById<ListView>(R.id.listaCores)
+        val listaCores = findViewById<ListView>(R.id.listaCores)
         val adapter = corAdapter(this, this.cores)
-        lvCores.adapter = adapter
+        listaCores.adapter = adapter
 
-        lvCores.setOnItemClickListener { _, _, i, _ ->
+        listaCores.setOnItemClickListener { _, _, i, _ ->
             run {
                 val itemclicked = adapter.getItem(i)
                 val intent = Intent(this, FormActivity::class.java)
                 intent.putExtra("COR", itemclicked)
                 intent.putExtra("POS", i)
-                startActivityForResult(intent, EDIT)
+                startActivityForResult(intent, 2)
             }
         }
 
-        lvCores.setOnItemLongClickListener { _, _, i, _ ->
+        listaCores.setOnItemLongClickListener { _, _, i, _ ->
             run {
                 val cor = adapter.getItem(i)
                 this.corDAO.delete(cor.id)
@@ -48,42 +50,24 @@ class MainActivity : AppCompatActivity() {
 
         fabAdd.setOnClickListener {
             val intent = Intent(this, FormActivity::class.java)
-            startActivityForResult(intent, ADD)
+            startActivityForResult(intent, 1)
         }
 
-    }
-
-    override fun onResume() {
-        super.onResume()
-        Log.i("MAIN", "resumed!")
-        this.cores = this.corDAO.select()
-
-        (findViewById<ListView>(R.id.listaCores).adapter as corAdapter).setArray(this.cores)
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
 
         if (resultCode == Activity.RESULT_OK) {
-            val cor = data?.getSerializableExtra("COR") as Cor
-            val adapter = findViewById<ListView>(R.id.listaCores).adapter as corAdapter
-            when (requestCode) {
-                ADD -> {
+            if (requestCode == 1) {
+                val cor = data?.getSerializableExtra("COR") as Cor
+                if (cor != null) {
+
                     this.corDAO.insert(cor)
-                    Toast.makeText(this, "Cor adicionada!", Toast.LENGTH_SHORT).show()
                 }
-                EDIT -> {
-                    this.corDAO.update(cor)
-                    val pos = data.getIntExtra("POS", 0)
-                    adapter.update(cor, pos)
-                    Toast.makeText(this, "Cor atualizada!", Toast.LENGTH_SHORT).show()
-                }
+                Toast.makeText(this, "Cor adicionada", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
-    companion object {
-        const val ADD = 1
-        const val EDIT = 2
-    }
 }
