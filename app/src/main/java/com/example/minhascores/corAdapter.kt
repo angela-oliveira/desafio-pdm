@@ -7,8 +7,6 @@ import android.view.ViewGroup
 import android.widget.BaseAdapter
 import android.widget.ImageView
 import android.widget.TextView
-import com.example.minhascores.Cor
-import com.example.minhascores.R
 
 class corAdapter  (private val context: Context, private val dataSource: ArrayList<Cor>) : BaseAdapter() {
     private val inflater : LayoutInflater = context.getSystemService(Context.LAYOUT_INFLATER_SERVICE) as LayoutInflater

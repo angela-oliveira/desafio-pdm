@@ -95,7 +95,7 @@
         android:layout_gravity="center"
         android:layout_weight="1">
         <Button
-            android:id="@+id/botaoSalvar"
+            android:id="@+id/btnSalvar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:backgroundTint="@color/cinza"
@@ -104,7 +104,7 @@
         </Button>
 
         <Button
-            android:id="@+id/botaoCancelar"
+            android:id="@+id/btnCancelar"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:backgroundTint="@color/vermelho"

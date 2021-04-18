@@ -12,114 +12,122 @@ import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.SeekBar
+import android.widget.Toast
 import com.example.minhascores.Cor
-import com.example.minhascores.corDAO
 
 class FormActivity : AppCompatActivity() {
-    private lateinit var corVerde: SeekBar
-    private lateinit var corAzul: SeekBar
-    private lateinit var corVermelho: SeekBar
+
+    private var cor: Cor = Cor("", 0)
+    private lateinit var btnSalvar: Button
+    private lateinit var btnCancelar: Button
+
     private lateinit var corDAO: corDAO
     private lateinit var nome: EditText
-    private lateinit var botaoSalvar: Button
-    private lateinit var botaoCancelar: Button
-    private var corResultado: Int = 0
-    private lateinit var botaoResultado: Button
+    private lateinit var btnResultado: Button
+
+    private lateinit var verde: SeekBar
+    private lateinit var azul: SeekBar
+    private lateinit var vermelho: SeekBar
+
+    private var vermelhoCor: Int = 0
+    private var verdeCor: Int = 0
+    private var azulCor: Int = 0
+    private var resultado: Int = 0
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_form)
 
-        this.corVerde = findViewById(R.id.barraVerde)
-        this.corVermelho = findViewById(R.id.barraVermelho)
-        this.corAzul = findViewById(R.id.barraAzul)
-        this.botaoSalvar = findViewById(R.id.botaoSalvar)
-        this.botaoCancelar = findViewById(R.id.botaoCancelar)
         this.nome = findViewById(R.id.nome)
+        this.btnSalvar = findViewById(R.id.btnSalvar)
+        this.btnCancelar = findViewById(R.id.btnCancelar)
+
+        this.verde = findViewById(R.id.barraVerde)
+        this.vermelho = findViewById(R.id.barraVermelho)
+        this.azul = findViewById(R.id.barraAzul)
+
         this.corDAO = corDAO(this)
-        this.botaoResultado = findViewById(R.id.resultCor)
+        this.btnResultado = findViewById(R.id.resultCor)
+
+
+        btnCancelar.setOnClickListener {
+            this.finish()
+        }
+        btnSalvar.setOnClickListener {
+            this.addColor()
+        }
+
+        this.verde.setOnSeekBarChangeListener(VerdeSeek())
+        this.vermelho.setOnSeekBarChangeListener(VermelhoSeek())
+        this.azul.setOnSeekBarChangeListener(AzulSeek())
 
         if(intent.hasExtra("cor")){
-            val cor1 = intent.getSerializableExtra("cor") as Cor
+            val corNome = intent.getSerializableExtra("cor") as Cor
 
-            this.nome.setText(cor1.nome)
-            this.corAzul.progress = Color.blue(cor1.codigo)
-            this.corVermelho.progress = Color.red(cor1.codigo)
-            this.corVerde.progress = Color.green(cor1.codigo)
-            this.corResultado = cor1.codigo
-            transformaHexadecimal(cor1.codigo)
+            this.nome.setText(corNome.nome)
+            this.azul.progress = Color.blue(corNome.codigo)
+            this.vermelho.progress = Color.red(corNome.codigo)
+            this.verde.progress = Color.green(corNome.codigo)
+            this.resultado = corNome.codigo
+
+            this.btnResultado.setBackgroundColor(corNome.codigo)
+            this.btnResultado.text = Cor.toHex(corNome.codigo)
         }
 
-        this.corVerde.setOnSeekBarChangeListener(corConfig())
-        this.corVermelho.setOnSeekBarChangeListener(corConfig())
-        this.corAzul.setOnSeekBarChangeListener(corConfig())
-
-        this.botaoSalvar.setOnClickListener(clickSalvar())
-        this.botaoCancelar.setOnClickListener(clickCancelar())
-        this.botaoResultado.setOnClickListener(clickResultado())
-
     }
 
-    fun transformaHexadecimal(corNumero: Int){
-        this.botaoResultado.setBackgroundColor(corNumero)
-        this.botaoResultado.text = Cor.toHex(corNumero)
+    private fun addColor() {
+        cor.nome = nome.text.toString()
+        val intent = Intent()
+        intent.putExtra("color", cor)
+        setResult(RESULT_OK, intent)
+        Toast.makeText(this, "Cor salva com sucesso", Toast.LENGTH_SHORT).show()
+        this.finish()
     }
 
-    inner class clickCancelar(): View.OnClickListener{
-        override fun onClick(v: View?) {
-            setResult(Activity.RESULT_CANCELED)
-            finish()
-        }
+    private fun updateBackgroundColor() {
+        val codigo = Color.rgb(vermelhoCor, verdeCor, azulCor)
+        cor.codigo = codigo
+        this.btnResultado.setBackgroundColor(codigo)
+        this.btnResultado.text = cor.toHex()
     }
 
-    inner class clickResultado(): View.OnClickListener{
-        override fun onClick(v: View?) {
-            var corHexa = (v as Button).text
-            var barra = getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-            var result = ClipData.newPlainText("resultado", corHexa)
-            barra.setPrimaryClip(result)
-        }
-    }
-
-    inner class clickSalvar(): View.OnClickListener{
-        override fun onClick(v: View?) {
-            var nomeCor = this@FormActivity.nome.text.toString()
-            var cor = Cor(nomeCor, corResultado)
-
-            var intent = Intent()
-            if(intent.hasExtra("cor") && intent.hasExtra("Lista_Cores")){
-                var novaIntent = (intent.getSerializableExtra("cor") as Cor).id
-                intent.putExtra("Lista_Cores", intent.getIntExtra("Lista_Cores", corResultado))
-                cor.id = novaIntent
-                this@FormActivity.corDAO.update(cor)
-            }
-            else{
-                var idCor = this@FormActivity.corDAO.insert(cor)
-                cor.id = idCor.toString().toInt()
-            }
-
-            intent.putExtra("cor", cor)
-            setResult(Activity.RESULT_OK,intent)
-            finish()
-        }
-    }
-
-    inner class corConfig(): SeekBar.OnSeekBarChangeListener{
+    inner class VermelhoSeek: SeekBar.OnSeekBarChangeListener {
         override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
-            var azul = this@FormActivity.corAzul.progress
-            var verde = this@FormActivity.corVerde.progress
-            var vermelho = this@FormActivity.corVermelho.progress
+            vermelhoCor = progress
+            this@FormActivity.addColor()
+        }
+        override fun onStartTrackingTouch(seekBar: SeekBar?) {
+        }
+        override fun onStopTrackingTouch(seekBar: SeekBar?) {
+        }
+    }
 
-            var corFormada: Int = Color.rgb(vermelho, verde, azul)
-            this@FormActivity.corResultado = corFormada
-            this@FormActivity.transformaHexadecimal(corFormada)
+    inner class VerdeSeek: SeekBar.OnSeekBarChangeListener {
+        override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+            verdeCor = progress
+            this@FormActivity.updateBackgroundColor()
         }
 
         override fun onStartTrackingTouch(seekBar: SeekBar?) {
-            TODO("Not yet implemented")
         }
 
         override fun onStopTrackingTouch(seekBar: SeekBar?) {
-            TODO("Not yet implemented")
         }
+
+    }
+
+    inner class AzulSeek: SeekBar.OnSeekBarChangeListener {
+        override fun onProgressChanged(seekBar: SeekBar?, progress: Int, fromUser: Boolean) {
+            azulCor = progress
+            this@FormActivity.updateBackgroundColor()
+        }
+
+        override fun onStartTrackingTouch(seekBar: SeekBar?) {
+        }
+
+        override fun onStopTrackingTouch(seekBar: SeekBar?) {
+        }
+
     }
 }
